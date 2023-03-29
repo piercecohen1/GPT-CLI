@@ -48,7 +48,6 @@ class ChatApplication:
 
     def get_chat_completion(self):
         try:
-            print("Sent: " + self.messages[-1]["content"])
             response = openai.ChatCompletion.create(
                 model=self.model,
                 messages=self.messages
