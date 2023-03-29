@@ -19,10 +19,14 @@ openai.api_key = os.environ.get("OPENAI_API_KEY")
 # Uncomment the following line if you wish to hardcode your API key
 # openai.api_key = "YOUR_API_KEY"
 
+homebrew_prefix = os.environ.get("HOMEBREW_PREFIX", "/usr/local")
+homebrew_audio_file_path = os.path.join(homebrew_prefix, "share", "gpt-cli", "resources", "alert.wav")
+repo_audio_file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "resources", "alert.wav")
+
+audio_file_path = homebrew_audio_file_path if os.path.exists(homebrew_audio_file_path) else repo_audio_file_path
 
 def clear_terminal():
     os.system("cls" if os.name == "nt" else "clear")
-
 
 class ChatApplication:
     def __init__(self, system_message=None, model="gpt-3.5-turbo"):
@@ -153,7 +157,7 @@ def main():
                 last_response = assistant_response
                 chat_app.display_markdown(f"**Assistant:** {assistant_response}")
                 if chat_app.sound:
-                    playsound("alert.wav")
+                    playsound(audio_file_path)
             else:
                 print("Assistant: I'm unable to provide a response at the moment.")
     except KeyboardInterrupt:
