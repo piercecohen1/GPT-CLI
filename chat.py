@@ -48,6 +48,7 @@ class ChatApplication:
 
     def get_chat_completion(self):
         try:
+            # print("Sent: " + self.messages[-1]["content"])
             response = openai.ChatCompletion.create(
                 model=self.model,
                 messages=self.messages
@@ -71,8 +72,31 @@ def main():
 
             if user_message.startswith("/"):
                 commands = user_message.split("/")
+
+                new_system_message = None
+                new_model = None
+
                 for command in commands:
                     command = command.lower().strip()
+                    if command.startswith("system"):
+                        new_system_message = command[6:].strip()
+                        if "/paste" in new_system_message:
+                            new_system_message = new_system_message.replace("/paste", pyperclip.paste())
+                    elif command.startswith("model"):
+                        new_model = command[5:].strip()
+
+                if new_system_message is not None or new_model is not None:
+                    clear_terminal()
+                    chat_app = ChatApplication(system_message=new_system_message if new_system_message is not None else chat_app.system_message, 
+                                               model=new_model if new_model is not None else chat_app.model)
+                    print("Started a new chat with updated settings.")
+
+                for command in commands:
+                    command = command.lower().strip()
+
+                    if command.startswith("system") or command.startswith("model"):
+                        continue
+
                     if command.startswith("help"):
                         print("Available commands:")
                         print("/paste - Paste content from the clipboard")
@@ -102,7 +126,7 @@ def main():
                             print(f"Switched to model '{model_name}' and started a new chat.")
                         else:
                             print("Please specify a model name after the /model command.")
-                    elif command.startswith("quit"):
+                    elif command.startswith("quit") or command.startswith("exit"):
                         print("Exiting the chat application. Goodbye!")
                         sys.exit(0)
                     elif command.startswith("info"):
