@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 # Author: Pierce Cohen
 # Description: An interactive CLI for GPT models
 
@@ -9,6 +11,7 @@ from rich.markdown import Markdown
 import pyperclip
 from playsound import playsound
 import readline
+import argparse
 
 # OpenAI API key, stored as an environment variable
 openai.api_key = os.environ.get("OPENAI_API_KEY")
@@ -59,7 +62,16 @@ class ChatApplication:
             return None
 
 def main():
+    parser = argparse.ArgumentParser(description="An interactive CLI for GPT models")
+    parser.add_argument("-v", "--version", action="store_true", help="Show the version number and exit")
+    args = parser.parse_args()
+
+    if args.version:
+        print("GPT-CLI version 1.0.1")
+        sys.exit(0)
+        
     chat_app = ChatApplication()
+
     last_response = ""
     print("Model: " + chat_app.model)
     try:
