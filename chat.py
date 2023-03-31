@@ -202,7 +202,7 @@ def main():
                         print("/quit - Quit the interactive chat")
                         print("/info - Display current model and messages")
                         print("/save [FILENAME] - Save the chat to a file")
-                        print("/restore [FILENAME] - Restore a chat from a file")
+                        print("/load [FILENAME] - Load a chat from a file")
                     if command.startswith("copy"):
                         pyperclip.copy(last_response)
                         print("Assistant's response copied to clipboard.")
@@ -247,12 +247,12 @@ def main():
                             chat_app.save_chat(filename)
                         else:
                             print("Please specify a filename after the /save command.")
-                    elif command.startswith("restore"):
+                    elif command.startswith("load"):
                         filename = command[7:].strip()
                         if filename:
                             chat_app.load_chat(filename)
                         else:
-                            print("Please specify a filename after the /restore command.")
+                            print("Please specify a filename after the /load command.")
 
                 continue
 
