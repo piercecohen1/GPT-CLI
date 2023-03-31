@@ -12,6 +12,8 @@ import pyperclip
 from playsound import playsound
 import argparse
 import json
+from rich.table import Table
+
 if os.name == "nt":
     import pyreadline as readline
 else:
@@ -55,7 +57,8 @@ class ChatApplication:
         if self.system_message:
             self.messages = [{"role": "system", "content": self.system_message}]
         else:
-            self.messages = [{"role": "system", "content": "You are a helpful assistant."}]
+            self.system_message = "You are a helpful assistant."
+            self.messages = [{"role": "system", "content": self.system_message}]
 
     def add_message(self, role, content):
         message = {
@@ -112,14 +115,31 @@ class ChatApplication:
             print(f"An error occurred while saving the chat: {e}")
 
     def load_chat(self, filename):
+        clear_terminal()
         try:
             with open(filename, "r") as infile:
                 self.messages = json.load(infile)
             print(f"Chat loaded from '{filename}'.")
+            for message in self.messages:
+                role = message["role"].capitalize()
+                content = message["content"]
+                if role == "Assistant":
+                    self.display_markdown(f"**{role}:** {content}")
+                else:
+                    print(f"{role}: {content}")
         except FileNotFoundError:
             print(f"File '{filename}' not found.")
         except Exception as e:
             print(f"An error occurred while loading the chat: {e}")
+
+    def format_messages(self):
+        formatted_messages = ""
+        for message in self.messages:
+            role = message["role"].capitalize()
+            content = message["content"]
+            formatted_messages += f"{role}: {content}\n"
+        return formatted_messages
+
 
 def main():
     parser = argparse.ArgumentParser(description="An interactive CLI for GPT models")
@@ -127,7 +147,7 @@ def main():
     args = parser.parse_args()
 
     if args.version:
-        print("GPT-CLI version 1.1.0")
+        print("GPT-CLI version 1.2.0")
         sys.exit(0)
         
     chat_app = ChatApplication()
@@ -207,8 +227,20 @@ def main():
                         print("Exiting the chat application. Goodbye!")
                         sys.exit(0)
                     elif command.startswith("info"):
-                        print(f"Model: {chat_app.model}")
-                        print(f"Messages: {chat_app.messages}")
+                        user_messages = sum(1 for message in chat_app.messages if message["role"] == "user")
+                        assistant_messages = sum(1 for message in chat_app.messages if message["role"] == "assistant")
+                        system_message = chat_app.system_message
+
+                        table = Table(show_header=True, header_style="bold magenta")
+                        table.add_column("Attribute")
+                        table.add_column("Value")
+
+                        table.add_row("Model", chat_app.model)
+                        table.add_row("System Message", system_message)
+                        table.add_row("User Messages", str(user_messages))
+                        table.add_row("Assistant Messages", str(assistant_messages))
+
+                        chat_app.console.print(table)
                     elif command.startswith("save"):
                         filename = command[4:].strip()
                         if filename:
@@ -221,7 +253,6 @@ def main():
                             chat_app.load_chat(filename)
                         else:
                             print("Please specify a filename after the /restore command.")
-
 
                 continue
 

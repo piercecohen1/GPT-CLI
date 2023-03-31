@@ -2,5 +2,4 @@ openai
 rich
 pyperclip
 playsound
-readline; sys_platform == 'darwin'
 pyreadline; sys_platform == 'win32'
