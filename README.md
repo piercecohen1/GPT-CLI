@@ -59,13 +59,13 @@ Available commands:
 
 /model [MODEL]            Switch models and reset the chat
 
-/quit     b               Quit the interactive chat
+/quit                     Quit the interactive chat
 
 /info                     Display current model and messages
 
 /save [FILENAME]          Save the chat to a file
 
-/restore [FILENAME]       Restore a chat from a file
+/load [FILENAME]          Load a chat from a file
 
 /help                     Display help menu
 ```
