@@ -10,14 +10,25 @@ from rich.console import Console
 from rich.markdown import Markdown
 import pyperclip
 from playsound import playsound
-import readline
 import argparse
+import json
+if os.name == "nt":
+    import pyreadline as readline
+else:
+    import readline
+
+
 
 # OpenAI API key, stored as an environment variable
 openai.api_key = os.environ.get("OPENAI_API_KEY")
 
 # Uncomment the following line if you wish to hardcode your API key
 # openai.api_key = "YOUR_API_KEY"
+
+if not openai.api_key:
+    print("Error: OPENAI_API_KEY not found.")
+    print("Please set the OPENAI_API_KEY environment variable or hardcode your API key.")
+    sys.exit(1)
 
 homebrew_prefix = os.environ.get("HOMEBREW_PREFIX", "/usr/local")
 homebrew_audio_file_path = os.path.join(homebrew_prefix, "share", "gpt-cli", "resources", "alert.wav")
@@ -27,6 +38,10 @@ audio_file_path = homebrew_audio_file_path if os.path.exists(homebrew_audio_file
 
 def clear_terminal():
     os.system("cls" if os.name == "nt" else "clear")
+
+def file_completion(text, state):
+    files = [f for f in os.listdir() if f.startswith(text)]
+    return files[state] if state < len(files) else None
 
 class ChatApplication:
     def __init__(self, system_message=None, model="gpt-3.5-turbo"):
@@ -55,15 +70,56 @@ class ChatApplication:
 
     def get_chat_completion(self):
         try:
+            # Uncomment if you wish, useful for debugging
+            # print("Sent: " + self.messages[-1]["content"])
             response = openai.ChatCompletion.create(
                 model=self.model,
                 messages=self.messages
             )
             assistant_response = response.choices[0].message["content"]
             return assistant_response
-        except Exception as e:
-            print(f"An error occurred while processing your request: {e}")
+        except openai.error.OpenAIError as e:
+            if 'maximum context length' in str(e):
+                while True:
+                    # Remove the oldest message (excluding system message)
+                    if len(self.messages) > 1:
+                        self.messages.pop(1)
+                    else:
+                        break
+
+                    # Retry the API call
+                    try:
+                        response = openai.ChatCompletion.create(
+                            model=self.model,
+                            messages=self.messages
+                        )
+                        assistant_response = response.choices[0].message["content"]
+                        return assistant_response
+                    except openai.error.OpenAIError as retry_e:
+                        if 'maximum context length' not in str(retry_e):
+                            print(f"An error occurred while processing your request: {retry_e}")
+                            break
+            else:
+                print(f"An error occurred while processing your request: {e}")
             return None
+
+    def save_chat(self, filename):
+        try:
+            with open(filename, "w") as outfile:
+                json.dump(self.messages, outfile)
+            print(f"Chat saved to '{filename}'.")
+        except Exception as e:
+            print(f"An error occurred while saving the chat: {e}")
+
+    def load_chat(self, filename):
+        try:
+            with open(filename, "r") as infile:
+                self.messages = json.load(infile)
+            print(f"Chat loaded from '{filename}'.")
+        except FileNotFoundError:
+            print(f"File '{filename}' not found.")
+        except Exception as e:
+            print(f"An error occurred while loading the chat: {e}")
 
 def main():
     parser = argparse.ArgumentParser(description="An interactive CLI for GPT models")
@@ -71,13 +127,17 @@ def main():
     args = parser.parse_args()
 
     if args.version:
-        print("GPT-CLI version 1.0.1")
+        print("GPT-CLI version 1.0.2")
         sys.exit(0)
         
     chat_app = ChatApplication()
 
     last_response = ""
     print("Model: " + chat_app.model)
+
+    readline.set_completer(file_completion)
+    readline.parse_and_bind("tab: complete")
+
     try:
         while True:
             user_message = input("You: ")
@@ -121,6 +181,8 @@ def main():
                         print("/model - Switch models and reset the chat")
                         print("/quit - Quit the interactive chat")
                         print("/info - Display current model and messages")
+                        print("/save [FILENAME] - Save the chat to a file")
+                        print("/load [FILENAME] - Load a chat from a file")
                     if command.startswith("copy"):
                         pyperclip.copy(last_response)
                         print("Assistant's response copied to clipboard.")
@@ -147,6 +209,19 @@ def main():
                     elif command.startswith("info"):
                         print(f"Model: {chat_app.model}")
                         print(f"Messages: {chat_app.messages}")
+                    elif command.startswith("save"):
+                        filename = command[4:].strip()
+                        if filename:
+                            chat_app.save_chat(filename)
+                        else:
+                            print("Please specify a filename after the /save command.")
+                    elif command.startswith("restore"):
+                        filename = command[7:].strip()
+                        if filename:
+                            chat_app.load_chat(filename)
+                        else:
+                            print("Please specify a filename after the /restore command.")
+
 
                 continue
 
