@@ -127,7 +127,7 @@ def main():
     args = parser.parse_args()
 
     if args.version:
-        print("GPT-CLI version 1.0.2")
+        print("GPT-CLI version 1.1.0")
         sys.exit(0)
         
     chat_app = ChatApplication()
