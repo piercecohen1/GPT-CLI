@@ -182,7 +182,7 @@ def main():
                         print("/quit - Quit the interactive chat")
                         print("/info - Display current model and messages")
                         print("/save [FILENAME] - Save the chat to a file")
-                        print("/load [FILENAME] - Load a chat from a file")
+                        print("/restore [FILENAME] - Restore a chat from a file")
                     if command.startswith("copy"):
                         pyperclip.copy(last_response)
                         print("Assistant's response copied to clipboard.")
