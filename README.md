@@ -12,6 +12,7 @@ An interactive CLI for GPT models
 * Play sounds on response
 * Model switching on the fly
 * Chat commands to manage the chat and settings
+* Save and Restore chat conversations
 
 ## Installation
 1. Clone the repository:
@@ -61,6 +62,10 @@ Available commands:
 /quit     b               Quit the interactive chat
 
 /info                     Display current model and messages
+
+/save [FILENAME]          Save the chat to a file
+
+/restore [FILENAME]       Restore a chat from a file
 
 /help                     Display help menu
 ```
