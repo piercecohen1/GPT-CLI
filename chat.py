@@ -17,8 +17,7 @@ from rich.table import Table
 if os.name == "nt":
     import pyreadline as readline
 else:
-    import readline
-
+    import gnureadline as readline
 
 
 # OpenAI API key, stored as an environment variable
