@@ -57,6 +57,8 @@ Available commands:
 
 /new                      Start a new chat
 
+/clear                    Clear terminal window
+
 /system [SYSTEM PROMPT]   Start a new chat with a custom system message
 
 /model [MODEL]            Switch models and reset the chat
