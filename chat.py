@@ -52,12 +52,15 @@ class ChatApplication:
         self.console = Console()
         self.sound = True # Set to False to disable sound
 
-    def initialize_messages(self):
-        if self.system_message:
-            self.messages = [{"role": "system", "content": self.system_message}]
+    def initialize_messages(self, system_message=None, model=None):
+        if system_message:
+            self.system_message = system_message
         else:
-            self.system_message = "You are a helpful assistant."
-            self.messages = [{"role": "system", "content": self.system_message}]
+            self.system_message = "You are a helpful assistant"
+        if model:
+            self.model = model
+        self.messages = [{"role": "system", "content": self.system_message}]
+
 
     def add_message(self, role, content):
         message = {
@@ -107,8 +110,19 @@ class ChatApplication:
 
     def save_chat(self, filename):
         try:
+            # Remove the model information from the messages
+            for message in self.messages:
+                if "model" in message:
+                    del message["model"]
+
+            chat_data = {
+                "model": self.model,
+                "messages": self.messages
+            }
+
             with open(filename, "w") as outfile:
-                json.dump(self.messages, outfile)
+                json.dump(chat_data, outfile)
+            
             print(f"Chat saved to '{filename}'.")
         except Exception as e:
             print(f"An error occurred while saving the chat: {e}")
@@ -117,9 +131,24 @@ class ChatApplication:
         clear_terminal()
         try:
             with open(filename, "r") as infile:
-                self.messages = json.load(infile)
+                chat_data = json.load(infile)
+
+            loaded_messages = chat_data["messages"]
+            
+            system_message = None
+            model = chat_data["model"] if "model" in chat_data else None
+            for message in loaded_messages:
+                if message["role"] == "system":
+                    system_message = message["content"]
+
+            if model:
+                self.model = model
+
+            self.initialize_messages(system_message, model)
+            self.messages = loaded_messages
             print(f"Chat loaded from '{filename}'.")
-            for message in self.messages:
+            
+            for message in loaded_messages:
                 role = message["role"].capitalize()
                 content = message["content"]
                 if role == "Assistant":
@@ -182,7 +211,9 @@ def main():
                 if new_system_message is not None or new_model is not None:
                     clear_terminal()
                     chat_app = ChatApplication(system_message=new_system_message if new_system_message is not None else chat_app.system_message, 
-                                               model=new_model if new_model is not None else chat_app.model)
+                                            model=new_model if new_model is not None else chat_app.model)
+                    chat_app.initialize_messages(system_message=new_system_message if new_system_message is not None else chat_app.system_message, 
+                                                model=new_model if new_model is not None else chat_app.model)
                     print("Started a new chat with updated settings.")
 
                 for command in commands:
