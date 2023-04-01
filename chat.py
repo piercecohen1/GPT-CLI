@@ -247,7 +247,7 @@ def main():
                         else:
                             print("Please specify a filename after the /save command.")
                     elif command.startswith("load"):
-                        filename = command[7:].strip()
+                        filename = command[4:].strip()
                         if filename:
                             chat_app.load_chat(filename)
                         else:
