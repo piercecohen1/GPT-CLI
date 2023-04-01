@@ -1,7 +1,9 @@
 # GPT-CLI
 An interactive CLI for GPT models
 
-[![asciicast](https://asciinema.org/a/gVbepEltW8Gb19NyK3Kzmya4h.svg)](https://asciinema.org/a/gVbepEltW8Gb19NyK3Kzmya4h)
+**Click below to see a short demo!**
+
+[![asciicast](https://asciinema.org/a/572801.svg)](https://asciinema.org/a/572801)
 
 ## Features
 * Simple and intuitive command-line interface
