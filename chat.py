@@ -227,6 +227,7 @@ def main():
                         print("/paste - Paste content from the clipboard")
                         print("/copy - Copy the last response to the clipboard")
                         print("/new - Start a new chat")
+                        print("/clear - Clear terminal window")
                         print("/system - Start a new chat with a custom system message")
                         print("/model - Switch models and reset the chat")
                         print("/quit - Quit the interactive chat")
@@ -283,6 +284,8 @@ def main():
                             chat_app.load_chat(filename)
                         else:
                             print("Please specify a filename after the /load command.")
+                    elif command.startswith("clear"):
+                        clear_terminal()
 
                 continue
 
