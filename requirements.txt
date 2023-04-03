@@ -2,6 +2,4 @@ openai
 rich
 pyperclip
 playsound
-gnureadline; sys_platform != "win32"
-pyreadline; sys_platform == "win32"
 prompt-toolkit
