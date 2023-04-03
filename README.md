@@ -17,6 +17,9 @@ An interactive CLI for GPT models
 * Save and Restore chat conversations
 
 ## Installation
+
+#### Make sure you have Python 3.10 or higher installed on your system. You can check your Python version by running `python --version` or `python3 --version` in your terminal. Older version may work but have not been tested.
+
 1. Clone the repository:
 ```bash
 git clone https://github.com/yourusername/gpt-chat-cli.git
