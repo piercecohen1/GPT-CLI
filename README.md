@@ -22,14 +22,14 @@ An interactive CLI for GPT models
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/gpt-chat-cli.git
-cd gpt-chat-cli
+git clone https://github.com/piercecohen1/GPT-CLI.git
+cd GPT-CLI
 ```
 
-2. Create a virtual environment and activate it:
+2. Create a virtual environment and activate it (optional):
 ```bash
-python3 -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+python3 -m venv gpt-venv
+source gpt-venv/bin/activate  # On Windows: gpt-venv\Scripts\activate
 ```
 
 3. Install the required dependencies:
@@ -37,10 +37,25 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip3 install -r requirements.txt
 ```
 
-4. Add your OpenAI API key as an environment variable:
+4. Add your OpenAI API key as an environment variable (replace your_api_key with your actual API key):
+
+For Zsh:
+```bash
+echo "export OPENAI_API_KEY=your_api_key" >> ~/.zshrc
+source ~/.zshrc
+```
+
+For Bash:
+```bash
+echo "export OPENAI_API_KEY=your_api_key" >> ~/.bashrc
+source ~/.bashrc
+```
+
+Or, to set temporarily:
 ```bash
 export OPENAI_API_KEY=your_api_key  # On Windows: set OPENAI_API_KEY=your_api_key
 ```
+
 
 Alternatively, you can uncomment and replace the "YOUR_API_KEY" placeholder in the code with your actual API key.
 
