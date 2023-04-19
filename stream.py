@@ -49,12 +49,8 @@ audio_file_path = homebrew_audio_file_path if os.path.exists(homebrew_audio_file
 def clear_terminal():
     os.system("cls" if os.name == "nt" else "clear")
 
-def file_completion(text, state):
-    files = [f for f in os.listdir() if f.startswith(text)]
-    return files[state] if state < len(files) else None
-
 class ChatApplication:
-    def __init__(self, system_message=None, model="gpt-3.5-turbo"):
+    def __init__(self, system_message=None, model="gpt-4"):
         self.model = model
         self.system_message = system_message
         self.initialize_messages()
