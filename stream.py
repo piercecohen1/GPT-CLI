@@ -17,6 +17,7 @@ from prompt_toolkit import PromptSession
 from prompt_toolkit.completion import PathCompleter, Completer, Completion
 from prompt_toolkit.document import Document
 from rich.live import Live
+from urllib3.exceptions import InvalidChunkLength
 
 class CustomPathCompleter(Completer):
     def get_completions(self, document, complete_event):
@@ -61,7 +62,7 @@ class ChatApplication:
         if system_message:
             self.system_message = system_message
         else:
-            self.system_message = "You are a helpful assistant"
+            self.system_message = "You are a helpful assistant. Answer as consicely as possible."
         if model:
             self.model = model
         self.messages = [{"role": "system", "content": self.system_message}]
@@ -96,6 +97,10 @@ class ChatApplication:
                         live.update(Markdown(markdown_text))
                         live.refresh()
             return full_content
+        
+        except InvalidChunkLength as e:
+            print(f"An error occurred while processing the response: {e}")
+            return None
 
         except openai.error.OpenAIError as e:
             if 'maximum context length' in str(e):
@@ -107,6 +112,7 @@ class ChatApplication:
                         break
 
                     # Retry the API call
+                    # TODO: Make separate function for this
                     try:
                         response = openai.ChatCompletion.create(
                             model=self.model,
@@ -196,6 +202,7 @@ class ChatApplication:
 def main():
     parser = argparse.ArgumentParser(description="An interactive CLI for GPT models")
     parser.add_argument("-v", "--version", action="store_true", help="Show the version number and exit")
+    parser.add_argument("--load", type=str, help="Load a chat from a file immediately upon launching the program")
     args = parser.parse_args()
 
     if args.version:
@@ -203,6 +210,9 @@ def main():
         sys.exit(0)
         
     chat_app = ChatApplication()
+
+    if args.load:
+        chat_app.load_chat(args.load)
 
     last_response = ""
     print("Model: " + chat_app.model)
@@ -225,6 +235,7 @@ def main():
                 new_system_message = None
                 new_model = None
 
+                # TODO: Handle commands with a dictionary and separate functions for each command
                 for command in commands:
                     command = command.lower().strip()
                     if command.startswith("system"):
@@ -240,7 +251,7 @@ def main():
                                             model=new_model if new_model is not None else chat_app.model)
                     chat_app.initialize_messages(system_message=new_system_message if new_system_message is not None else chat_app.system_message, 
                                                 model=new_model if new_model is not None else chat_app.model)
-                    print("Started a new chat with updated settings.")
+                    print("\n\nStarted a new chat with updated settings.")
 
                 for command in commands:
                     command = command.lower().strip()
@@ -266,7 +277,7 @@ def main():
                     elif command.startswith("new"):
                         clear_terminal()
                         chat_app = ChatApplication()
-                        print("Started a new chat.")
+                        print("\n\nStarted a new chat.")
                     elif command.startswith("system"):
                         system_message = command[6:].strip()
                         clear_terminal()
@@ -319,6 +330,7 @@ def main():
                             print("Please specify a filename after the /load command.")
                     elif command.startswith("clear"):
                         clear_terminal()
+                        print("\n")
 
                 continue
 
