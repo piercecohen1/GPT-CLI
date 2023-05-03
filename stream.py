@@ -221,6 +221,7 @@ def main():
         chat_app.load_chat(args.load)
 
     if args.query:
+        print()
         chat_app.add_message("user", args.query)
         assistant_response = chat_app.get_chat_completion()
         if assistant_response is not None:
@@ -238,9 +239,12 @@ def main():
     try:
         while True:
             user_message = session.prompt("You: ")
-
             if "/paste" in user_message:
-                user_message = user_message.replace("/paste", pyperclip.paste())
+                clipboard_content = pyperclip.paste()
+                if clipboard_content is None:
+                    print("Clipboard is empty.")
+                    continue
+                user_message = user_message.replace("/paste", clipboard_content)
 
             if user_message.startswith("/"):
                 if user_message.startswith("/save ") or user_message.startswith("/load "):
