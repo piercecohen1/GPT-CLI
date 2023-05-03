@@ -12,6 +12,7 @@ import pyperclip
 from playsound import playsound
 import argparse
 import json
+import time
 from rich.table import Table
 from prompt_toolkit import PromptSession
 from prompt_toolkit.completion import PathCompleter, Completer, Completion
@@ -51,12 +52,14 @@ def clear_terminal():
     os.system("cls" if os.name == "nt" else "clear")
 
 class ChatApplication:
-    def __init__(self, system_message=None, model="gpt-4"):
+    def __init__(self, system_message=None, model="gpt-4", clear_on_init=False):
         self.model = model
         self.system_message = system_message
         self.initialize_messages()
         self.console = Console()
         self.sound = True # Set to False to disable sound
+        if clear_on_init:
+            clear_terminal()
 
     def initialize_messages(self, system_message=None, model=None):
         if system_message:
@@ -79,24 +82,28 @@ class ChatApplication:
         markdown = Markdown(text)
         self.console.print(markdown, end="")
 
+    def try_chat_completion(self):
+        full_content = ""
+        with Live(auto_refresh=False) as live:
+            markdown_text = f"**Assistant:** "
+            live.update(Markdown(markdown_text))
+            for chunk in openai.ChatCompletion.create(
+                model=self.model,
+                messages=self.messages,
+                stream=True,
+            ):
+                content = chunk["choices"][0].get("delta", {}).get("content")
+                if content:
+                    markdown_text += content
+                    full_content += content
+                    live.update(Markdown(markdown_text))
+                    live.refresh()
+        return full_content
+
+
     def get_chat_completion(self):
         try:
-            full_content = ""
-            with Live(auto_refresh=False) as live:
-                markdown_text = f"**Assistant:** "
-                live.update(Markdown(markdown_text))
-                for chunk in openai.ChatCompletion.create(
-                    model=self.model,
-                    messages=self.messages,
-                    stream=True,
-                ):
-                    content = chunk["choices"][0].get("delta", {}).get("content")
-                    if content:
-                        markdown_text += content
-                        full_content += content
-                        live.update(Markdown(markdown_text))
-                        live.refresh()
-            return full_content
+            return self.try_chat_completion()
         
         except InvalidChunkLength as e:
             print(f"An error occurred while processing the response: {e}")
@@ -104,22 +111,21 @@ class ChatApplication:
 
         except openai.error.OpenAIError as e:
             if 'maximum context length' in str(e):
-                while True:
-                    # Remove the oldest message (excluding system message)
-                    if len(self.messages) > 1:
-                        self.messages.pop(1)
-                    else:
-                        break
+                retry_limit = 25  # Set a limit for the number of retries
+                retry_count = 0
 
+                while retry_count < retry_limit:
+                    retry_count += 1
+                    # Remove the oldest two messages (excluding system message)
+                    if len(self.messages) > 4:
+                        for _ in range(4):
+                            self.messages.pop(1)
+
+                    time.sleep(0.1) 
                     # Retry the API call
                     # TODO: Make separate function for this
                     try:
-                        response = openai.ChatCompletion.create(
-                            model=self.model,
-                            messages=self.messages
-                        )
-                        assistant_response = response.choices[0].message["content"]
-                        return assistant_response
+                        return self.try_chat_completion()
                     except openai.error.OpenAIError as retry_e:
                         if 'maximum context length' not in str(retry_e):
                             print(f"An error occurred while processing your request: {retry_e}")
@@ -157,7 +163,6 @@ class ChatApplication:
             print(f"An error occurred while saving the chat: {e}")
 
     def load_chat(self, filename):
-        clear_terminal()
         try:
             filename = os.path.abspath(filename)
             with open(filename, "r") as infile:
@@ -203,16 +208,27 @@ def main():
     parser = argparse.ArgumentParser(description="An interactive CLI for GPT models")
     parser.add_argument("-v", "--version", action="store_true", help="Show the version number and exit")
     parser.add_argument("--load", type=str, help="Load a chat from a file immediately upon launching the program")
+    parser.add_argument("-q", "--query", type=str, help="Execute a query immediately upon launch")
     args = parser.parse_args()
 
     if args.version:
         print("GPT-CLI version 1.2.5")
         sys.exit(0)
         
-    chat_app = ChatApplication()
+    chat_app = ChatApplication(clear_on_init=False)
 
     if args.load:
         chat_app.load_chat(args.load)
+
+    if args.query:
+        chat_app.add_message("user", args.query)
+        assistant_response = chat_app.get_chat_completion()
+        if assistant_response is not None:
+            chat_app.add_message("assistant", assistant_response)
+            if chat_app.sound:
+                playsound(audio_file_path)
+        else:
+            print("Assistant: I'm unable to provide a response at the moment.")
 
     last_response = ""
     print("Model: " + chat_app.model)
@@ -246,8 +262,7 @@ def main():
                         new_model = command[5:].strip()
 
                 if new_system_message is not None or new_model is not None:
-                    clear_terminal()
-                    chat_app = ChatApplication(system_message=new_system_message if new_system_message is not None else chat_app.system_message, 
+                    chat_app = ChatApplication(clear_on_init=True,system_message=new_system_message if new_system_message is not None else chat_app.system_message, 
                                             model=new_model if new_model is not None else chat_app.model)
                     chat_app.initialize_messages(system_message=new_system_message if new_system_message is not None else chat_app.system_message, 
                                                 model=new_model if new_model is not None else chat_app.model)
@@ -276,18 +291,18 @@ def main():
                         print("Assistant's response copied to clipboard.")
                     elif command.startswith("new"):
                         clear_terminal()
-                        chat_app = ChatApplication()
+                        chat_app = ChatApplication(clear_on_init=True)
                         print("\n\nStarted a new chat.")
                     elif command.startswith("system"):
                         system_message = command[6:].strip()
                         clear_terminal()
-                        chat_app = ChatApplication(system_message=system_message)  # Create a new chat with a custom system message
+                        chat_app = ChatApplication(clear_on_init=True,system_message=system_message)  # Create a new chat with a custom system message
                         print("Started a new chat with a custom system message.")
                     elif command.startswith("model"):
                         model_name = command[5:].strip()
                         if model_name:
                             clear_terminal()
-                            chat_app = ChatApplication(model=model_name)  # Create a new chat with the specified model
+                            chat_app = ChatApplication(clear_on_init=True,model=model_name)  # Create a new chat with the specified model
                             print(f"Switched to model '{model_name}' and started a new chat.")
                         else:
                             print("Please specify a model name after the /model command.")
