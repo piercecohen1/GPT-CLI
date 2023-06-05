@@ -65,7 +65,7 @@ class ChatApplication:
         if system_message:
             self.system_message = system_message
         else:
-            self.system_message = "You are a helpful assistant. Answer as consicely as possible."
+            self.system_message = "You are a helpful assistant. Keep your answers concise when possible."
         if model:
             self.model = model
         self.messages = [{"role": "system", "content": self.system_message}]
