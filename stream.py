@@ -286,6 +286,7 @@ def main():
                         print("/clear - Clear terminal window")
                         print("/system - Start a new chat with a custom system message")
                         print("/model - Switch models and reset the chat")
+                        print("/gpt3 - Start a new chat with the model set to gpt-3.5-turbo-16k")
                         print("/quit - Quit the interactive chat")
                         print("/info - Display current model and messages")
                         print("/save [FILENAME] - Save the chat to a file")
@@ -310,6 +311,10 @@ def main():
                             print(f"Switched to model '{model_name}' and started a new chat.")
                         else:
                             print("Please specify a model name after the /model command.")
+                    elif command.startswith("gpt3"):
+                        clear_terminal()
+                        chat_app = ChatApplication(clear_on_init=True,model='gpt-3.5-turbo-16k')  # Create a new chat with the model set to gpt-3.5-turbo-16k
+                        print(f"Started a new chat with model 'gpt-3.5-turbo-16k'.")
                     elif command.startswith("quit") or command.startswith("exit"):
                         print("Exiting the chat application. Goodbye!")
                         sys.exit(0)
