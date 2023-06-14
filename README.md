@@ -81,6 +81,8 @@ Available commands:
 
 /model [MODEL]            Switch models and reset the chat
 
+/gpt3                     Start a new chat with the model set to gpt-3.5-turbo-16k
+
 /quit                     Quit the interactive chat
 
 /info                     Display current model and messages
