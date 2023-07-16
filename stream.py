@@ -209,20 +209,25 @@ def main():
     parser.add_argument("-v", "--version", action="store_true", help="Show the version number and exit")
     parser.add_argument("--load", type=str, help="Load a chat from a file immediately upon launching the program")
     parser.add_argument("-q", "--query", type=str, help="Execute a query immediately upon launch")
+    parser.add_argument('remainder', nargs=argparse.REMAINDER)
     args = parser.parse_args()
 
     if args.version:
         print("GPT-CLI version 1.3.0")
         sys.exit(0)
-        
+
     chat_app = ChatApplication(clear_on_init=False)
 
     if args.load:
         chat_app.load_chat(args.load)
 
-    if args.query:
+    query = args.query
+    if not query and args.remainder:
+        query = args.remainder[0]
+
+    if query:
         print()
-        chat_app.add_message("user", args.query)
+        chat_app.add_message("user", query)
         assistant_response = chat_app.get_chat_completion()
         if assistant_response is not None:
             chat_app.add_message("assistant", assistant_response)
