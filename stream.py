@@ -18,8 +18,6 @@ from prompt_toolkit.completion import PathCompleter, Completer, Completion
 from prompt_toolkit.document import Document
 from rich.live import Live
 
-# Instantiate the client with the API key
-# Now using the OpenAI class from the openai library
 client = openai.OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
 class CustomPathCompleter(Completer):
@@ -67,7 +65,7 @@ class ChatApplication:
         self.console.print(markdown, end="")
 
     def try_chat_completion(self):
-        response_content = ""  # Initialize a variable to hold the response content
+        response_content = ""  # Initialize variable to hold the response content
         try:
             stream = client.chat.completions.create(
                 model=self.model,
@@ -98,7 +96,6 @@ class ChatApplication:
         except Exception as e:
             print(f"An unexpected error occurred: {e}")
         
-    # Method save_chat starts here
     def save_chat(self, filename):
         try:
             with open(filename, "w") as outfile:
@@ -107,7 +104,6 @@ class ChatApplication:
         except Exception as e:
             print(f"An error occurred while saving the chat: {e}")
     
-    # Method load_chat starts here
     def load_chat(self, filename):
         try:
             with open(filename, "r") as infile:
@@ -120,7 +116,6 @@ class ChatApplication:
         except Exception as e:
             print(f"An error occurred while loading the chat: {e}")
     
-    # Method format_messages starts here
     def format_messages(self):
         formatted_messages = "\n".join(f"{message['role'].capitalize()}: {message['content']}"
                                        for message in self.messages)
@@ -147,25 +142,80 @@ def main():
         chat_app.add_message("user", args.query)
         chat_app.try_chat_completion()
     else:
-        print("Welcome to the GPT-CLI. Type your messages below.")
+        print(f"Model: {chat_app.model}")
 
     session = PromptSession(completer=CustomPathCompleter())
 
     try:
         while True:
             user_input = session.prompt("You: ")
-            if user_input.startswith('/save '):
-                filename = user_input.split(' ', 1)[1]
-                chat_app.save_chat(filename)
-            elif user_input.startswith('/load '):
-                filename = user_input.split(' ', 1)[1]
-                chat_app.load_chat(filename)
+
+            # Handle commands
+            if user_input.startswith('/'):
+                command = user_input.split(' ')[0].lower()
+                argument = user_input[len(command) + 1:].strip()
+
+                if command == '/save':
+                    chat_app.save_chat(argument)
+
+                elif command == '/load':
+                    chat_app.load_chat(argument)
+
+                elif command == '/quit':
+                    print("Exiting the GPT-CLI.")
+                    break
+
+                elif command == '/info':
+                    # Count user and assistant messages separately
+                    user_messages_count = sum(1 for message in chat_app.messages if message['role'] == 'user')
+                    assistant_messages_count = sum(1 for message in chat_app.messages if message['role'] == 'assistant')
+
+                    # Display a rich table with the chat information
+                    table = Table(title="Chat Information", show_header=True, header_style="bold magenta")
+                    table.add_column("Attribute", style="dim", width=20)
+                    table.add_column("Value")
+                    table.add_row("Model", chat_app.model)
+                    table.add_row("System Message", chat_app.system_message)
+                    table.add_row("User Messages", str(user_messages_count))
+                    table.add_row("Assistant Messages", str(assistant_messages_count))
+                    chat_app.console.print(table)
+
+                elif command == '/clear':
+                    clear_terminal()
+
+                elif command == '/new':
+                    chat_app.initialize_messages()
+                    print("Started a new chat session.")
+
+                elif command == '/system':
+                    chat_app.initialize_messages(system_message=argument)
+                    print("Updated the system message for new chat sessions.")
+
+                elif command == '/model':
+                    chat_app.model = argument
+                    chat_app.initialize_messages()
+                    print(f"Switched model to {argument} and started a new chat session.")
+
+                elif command == '/copy':
+                    pyperclip.copy(chat_app.messages[-1]['content'] if chat_app.messages else '')
+                    print("Copied the last message to the clipboard.")
+
+                elif command == '/paste':
+                    pasted_content = pyperclip.paste()
+                    chat_app.add_message("user", pasted_content)
+                    chat_app.try_chat_completion()
+
+                else:
+                    print(f"Unknown command: {command}")
+
             else:
                 chat_app.add_message("user", user_input)
                 chat_app.try_chat_completion()
-                print()  # Add a newline for better separation after the response
+                print()
+
     except KeyboardInterrupt:
-        print("\nExiting the GPT-CLI.")
+        print("\nExiting...")
 
 if __name__ == "__main__":
     main()
+
