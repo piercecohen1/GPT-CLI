@@ -69,7 +69,7 @@ Enter your message and press enter to send it. The AI model will respond accordi
 
 Available commands:
 ```
-/paste                    Your clipboard contents will be substituted for the `/paste`
+/paste                    Paste clipboard content
 
 /copy                     Copy the last response to the clipboard
 
@@ -79,19 +79,17 @@ Available commands:
 
 /system [SYSTEM PROMPT]   Start a new chat with a custom system message
 
-/model [MODEL]            Switch models and reset the chat
+/model [MODEL]            Start a new chat with the specified model
 
-/gpt3                     Start a new chat with the model set to gpt-3.5-turbo-16k
+/quit                     Exit the program
 
-/quit                     Quit the interactive chat
-
-/info                     Display current model and messages
+/info                     Display info about the current chat session
 
 /save [FILENAME]          Save the chat to a file
 
 /load [FILENAME]          Load a chat from a file
 
-/help                     Display help menu
+/help                     Display this help message
 ```
 
 

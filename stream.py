@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # Author: Pierce Cohen
 # Description: An interactive CLI for GPT models
+# Version: 1.4.0
 
 import openai
 import os
@@ -65,7 +66,7 @@ class ChatApplication:
         self.console.print(markdown, end="")
 
     def try_chat_completion(self):
-        response_content = ""  # Initialize variable to hold the response content
+        response_content = ""
         try:
             stream = client.chat.completions.create(
                 model=self.model,
@@ -73,15 +74,12 @@ class ChatApplication:
                 stream=True
             )
             for part in stream:
-                # Extract the content from the delta of the first choice
                 content = part.choices[0].delta.content if part.choices[0].delta.content is not None else ''
                 print(content, end='', flush=True)  # Print content as it's received
                 response_content += content  # Accumulate the response content
 
-                # Check if the response is complete
                 if 'finish_reason' in part.choices[0] and part.choices[0].finish_reason == 'stop':
-                    print()  # Ensure the output is on a new line
-                    self.add_message("assistant", response_content.strip())  # Save the assistant's response
+                    print()
                     break  # Break the loop since the message is complete
 
         except openai.APIConnectionError as e:
@@ -95,6 +93,8 @@ class ChatApplication:
             print(e.response)
         except Exception as e:
             print(f"An unexpected error occurred: {e}")
+
+        return response_content.strip()
         
     def save_chat(self, filename):
         try:
@@ -130,7 +130,7 @@ def main():
     args = parser.parse_args()
 
     if args.version:
-        print("GPT-CLI version 1.3.0")
+        print("GPT-CLI version 1.4.0")
         sys.exit(0)
 
     chat_app = ChatApplication()
@@ -141,6 +141,7 @@ def main():
     if args.query:
         chat_app.add_message("user", args.query)
         chat_app.try_chat_completion()
+        print()
     else:
         print(f"Model: {chat_app.model}")
 
@@ -150,7 +151,6 @@ def main():
         while True:
             user_input = session.prompt("You: ")
 
-            # Handle commands
             if user_input.startswith('/'):
                 command = user_input.split(' ')[0].lower()
                 argument = user_input[len(command) + 1:].strip()
@@ -161,16 +161,14 @@ def main():
                 elif command == '/load':
                     chat_app.load_chat(argument)
 
-                elif command == '/quit':
+                elif command == '/quit' or command == '/exit':
                     print("Exiting the GPT-CLI.")
                     break
 
                 elif command == '/info':
-                    # Count user and assistant messages separately
                     user_messages_count = sum(1 for message in chat_app.messages if message['role'] == 'user')
                     assistant_messages_count = sum(1 for message in chat_app.messages if message['role'] == 'assistant')
 
-                    # Display a rich table with the chat information
                     table = Table(title="Chat Information", show_header=True, header_style="bold magenta")
                     table.add_column("Attribute", style="dim", width=20)
                     table.add_column("Value")
@@ -188,14 +186,18 @@ def main():
                     print("Started a new chat session.")
 
                 elif command == '/system':
+                    clear_terminal()
                     chat_app.initialize_messages(system_message=argument)
-                    print("Updated the system message for new chat sessions.")
+                    print("Started a new chat with a custom system message.")
 
                 elif command == '/model':
                     chat_app.model = argument
-                    chat_app.initialize_messages()
-                    print(f"Switched model to {argument} and started a new chat session.")
-
+                    if argument:
+                        clear_terminal()
+                        chat_app.initialize_messages()
+                        print(f"Switched model to {argument} and started a new chat session.")
+                    else:
+                        print("Please specify a model name after the /model command.")
                 elif command == '/copy':
                     pyperclip.copy(chat_app.messages[-1]['content'] if chat_app.messages else '')
                     print("Copied the last message to the clipboard.")
@@ -205,12 +207,28 @@ def main():
                     chat_app.add_message("user", pasted_content)
                     chat_app.try_chat_completion()
 
+                elif command == '/help':
+                    print("Available commands:")
+                    print("/paste - Paste clipboard content")
+                    print("/copy - Copy the last response to the clipboard")
+                    print("/new - Start a new chat")
+                    print("/clear - Clear terminal window")
+                    print("/system - Start a new chat with a custom system message")
+                    print("/model - Start a new chat with the specified model")
+                    print("/quit - Exit the program")
+                    print("/info - Display info about the current chat session")
+                    print("/save [FILENAME] - Save the chat to a file")
+                    print("/load [FILENAME] - Load a chat from a file")
+                    print("/help - Display this help message")
+
                 else:
                     print(f"Unknown command: {command}")
 
             else:
                 chat_app.add_message("user", user_input)
-                chat_app.try_chat_completion()
+                assistant_response = chat_app.try_chat_completion()
+                if assistant_response:
+                    chat_app.add_message("assistant", assistant_response)
                 print()
 
     except KeyboardInterrupt:
