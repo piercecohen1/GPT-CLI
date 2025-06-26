@@ -62,7 +62,7 @@ Alternatively, you can uncomment and replace the "YOUR_API_KEY" placeholder in t
 ## Usage
 Run the chat application:
 ```bash
-python3 chat.py
+python3 stream.py
 ```
 
 Enter your message and press enter to send it. The AI model will respond accordingly. To use the available commands, type a `/` followed by the command.

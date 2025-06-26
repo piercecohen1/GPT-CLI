@@ -36,7 +36,7 @@ def clear_terminal():
     os.system("cls" if os.name == "nt" else "clear")
 
 class ChatApplication:
-    def __init__(self, system_message=None, model="gpt-3.5-turbo", clear_on_init=False):
+    def __init__(self, system_message=None, model="gpt-4o-mini", clear_on_init=False):
         self.model = model
         self.system_message = system_message
         self.initialize_messages()
@@ -74,11 +74,12 @@ class ChatApplication:
                 stream=True
             )
             for part in stream:
-                content = part.choices[0].delta.content if part.choices[0].delta.content is not None else ''
-                print(content, end='', flush=True)  # Print content as it's received
-                response_content += content  # Accumulate the response content
+                if part.choices[0].delta.content is not None:
+                    content = part.choices[0].delta.content
+                    print(content, end='', flush=True)  # Print content as it's received
+                    response_content += content  # Accumulate the response content
 
-                if 'finish_reason' in part.choices[0] and part.choices[0].finish_reason == 'stop':
+                if part.choices[0].finish_reason is not None:
                     print()
                     break  # Break the loop since the message is complete
 
@@ -87,10 +88,12 @@ class ChatApplication:
             print(e.__cause__)
         except openai.RateLimitError as e:
             print("A 429 status code was received; we should back off a bit.")
+        except openai.AuthenticationError as e:
+            print("Authentication failed. Please check your OpenAI API key.")
         except openai.APIStatusError as e:
             print("Non-200-range status code was received")
-            print(e.status_code)
-            print(e.response)
+            print(f"Status code: {e.status_code}")
+            print(f"Response: {e.response}")
         except Exception as e:
             print(f"An unexpected error occurred: {e}")
 
