@@ -9,7 +9,6 @@ import sys
 from rich.console import Console
 from rich.markdown import Markdown
 import pyperclip
-from playsound import playsound
 import argparse
 import json
 import time
@@ -41,7 +40,6 @@ class ChatApplication:
         self.system_message = system_message
         self.initialize_messages()
         self.console = Console()
-        self.sound = True  # Set to False to disable sound
         if clear_on_init:
             clear_terminal()
     
