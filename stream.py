@@ -9,7 +9,7 @@ import sys
 from rich.console import Console
 from rich.markdown import Markdown
 import pyperclip
-from playsound import playsound
+from playsound3 import playsound
 import argparse
 import json
 import time

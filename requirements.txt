@@ -1,5 +1,5 @@
 openai
 rich
 pyperclip
-playsound
+playsound3
 prompt-toolkit
